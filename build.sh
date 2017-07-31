@@ -3,16 +3,6 @@
 
 echo "Building monitor server..."
 
-go build monitor-server.go
-RETURN=$?
-
-if [ $RETURN -eq 0 ]
-then
-	echo "Server build success"
-else
-	echo "Build failed - exitting"
-	exit 1
-fi
 
 echo "Building for Linux..."
 
