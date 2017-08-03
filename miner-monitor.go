@@ -8,6 +8,8 @@ import (
 	"log"
 	"strings"
 	"time"
+	"net/http"
+	"bytes"
 )
 
 
@@ -67,13 +69,44 @@ func get_miner_summary() Summary {
 	return summary_output.SummaryData[0]
 }
 
+func get_miner_id() string {
+	ifs, _ := net.Interfaces()
+
+	for _, v := range ifs {
+		if (v.Name != "lo") {
+			return v.HardwareAddr.String();
+		}
+	}
+
+	return "Unknown";
+}
+
+func report_status() {
+	url := "http://10.90.113.195/minermon/report.php"
+	jsonStr, _ := json.Marshal(get_miner_summary())
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req.Header.Set("Miner-Id", get_miner_id())
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Failed to report hashrate back to controller.")
+	}
+
+	defer resp.Body.Close()
+}
+
 func main() {
 
 	log.Println("Starting miner-monitor // @friedkiwi 2017")
 
+	report_status()
+
 	for {
 		output := get_miner_summary()
+		report_status()
 		log.Printf("hash rate: %f\n", output.GhsAv)
-		time.Sleep(1 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }
